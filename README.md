@@ -10,8 +10,8 @@ git status
 ### Add everything, including README
 git add .
 
-### Initial commit
-git commit -m "Initial commit"
+### Commit
+git commit -m "Message"
 
 ### Initial push to GitHub
 git push -u origin main
