@@ -1,0 +1,29 @@
+# ❌ Python 가상환경
+.venv/
+venv/
+
+# ❌ Python 캐시
+__pycache__/
+*.pyc
+
+# ❌ ChromaDB 및 기타 로컬 저장 데이터
+data/
+*.db
+
+# ❌ 모델 다운로드 파일 (sentence-transformers 등이 여기에 저장함)
+models/
+*.bin
+*.ckpt
+*.pt
+
+# ❌ 환경 변수 파일
+.env
+
+# ❌ Mac 시스템 파일
+.DS_Store
+
+# ❌ 로그 파일
+*.log
+
+# ❌ Jupyter checkpoint
+.ipynb_checkpoints/
