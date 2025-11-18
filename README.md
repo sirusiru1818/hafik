@@ -20,6 +20,7 @@ git push -u origin main
 ### Directory Structure
 hafik/
 ├─ app/                      # 🔹 FastAPI 백엔드
+│  ├─ __init__.py
 │  ├─ main.py                # FastAPI 엔트리포인트
 │  ├─ api/
 │  │  ├─ __init__.py
@@ -28,7 +29,7 @@ hafik/
 │  │     └─ search.py        # /api/v1/search 엔드포인트
 │  ├─ core/
 │  │  ├─ __init__.py
-│  │  ├─ config.py           # 환경설정 (DB_URL, 모델명)
+│  │  ├─ config.py           # 환경설정 (DB_URL, MODEL_NAME 등)
 │  │  └─ db.py               # PostgreSQL + pgvector 연결
 │  ├─ models/
 │  │  ├─ __init__.py
@@ -36,24 +37,38 @@ hafik/
 │  ├─ schemas/
 │  │  ├─ __init__.py
 │  │  └─ search.py           # Request/Response Pydantic 모델
-│  ├─ services/
-│  │  ├─ __init__.py
-│  │  ├─ embeddings.py       # 임베딩 생성
-│  │  └─ search.py           # pgvector 검색 로직
-│  └─ __init__.py
+│  └─ services/
+│     ├─ __init__.py
+│     ├─ embeddings.py       # sentence-transformers 임베딩
+│     └─ search.py           # pgvector 검색 로직
 │
 ├─ frontend/                 # 🔹 프론트엔드 (HTML/CSS/JS)
-│  ├─ index.html             # 검색 UI (가설 입력)
-│  ├─ styles.css             # 스타일
-│  └─ main.js                # JS → 백엔드 API 호출
+│  ├─ public/
+│  │  └─ index.html          # 검색 UI 페이지
+│  └─ src/
+│     ├─ css/
+│     │  └─ styles.css       # 스타일
+│     └─ js/
+│        └─ main.js          # 백엔드 API 호출 JS
 │
-├─ scripts/                  # 데이터 적재 등 유틸
-│  └─ load_papers.py
+├─ scripts/                  # 🔹 유틸 스크립트 (로컬 개발/데이터 준비)
+│  ├─ __init__.py
+│  ├─ load_papers.py         # 논문 메타데이터 DB에 적재
+│  ├─ create_embeddings.py   # 논문 임베딩 생성 후 DB 저장
+│  └─ init_db.py             # DB 초기화 (테이블 생성 등)
 │
-├─ tests/                    # 테스트 코드
-│  └─ __init__.py
+├─ tests/                    # 🔹 테스트 코드
+│  ├─ __init__.py
+│  ├─ conftest.py            # pytest 설정
+│  ├─ test_api/
+│  │  ├─ __init__.py
+│  │  └─ test_search.py
+│  └─ test_services/
+│     ├─ __init__.py
+│     └─ test_embeddings.py
 │
-├─ .env                      # 환경변수 (gitignore 대상)
+├─ .env                      # 환경변수 파일 (GitHub 업로드 금지)
+├─ .env.example              # 템플릿 (GitHub 업로드 가능)
 ├─ .gitignore
 ├─ requirements.txt
 └─ README.md
