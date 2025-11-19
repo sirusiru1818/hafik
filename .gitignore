@@ -27,3 +27,7 @@ models/
 
 # ❌ Jupyter checkpoint
 .ipynb_checkpoints/
+
+# vscode 설정파일
+.vscode/
+
