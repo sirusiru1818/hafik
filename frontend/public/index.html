@@ -3,1781 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hafik - AI Research Assistant</title>
+    <title>Hafik</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg-dark: #050816;
-            --bg-card: rgba(15, 23, 42, 0.9);
-            --bg-card-soft: rgba(15, 23, 42, 0.85);
-            --bg-card-alt: rgba(31, 41, 55, 0.95);
-            --bg-input: rgba(15, 23, 42, 0.8);
-            --bg-chip: rgba(55, 65, 81, 0.6);
-            --border-subtle: rgba(148, 163, 184, 0.18);
-            --border-strong: rgba(148, 163, 184, 0.38);
-            --border-glow: rgba(167, 139, 250, 0.55);
-            --border-focus: rgba(94, 234, 212, 0.7);
-            --accent-soft: rgba(167, 139, 250, 0.35);
-            --accent-strong: #a855f7;
-            --accent-stronger: #8b5cf6;
-            --accent-highlight: rgba(94, 234, 212, 0.9);
-            --accent-highlight-soft: rgba(56, 189, 248, 0.85);
-            --text-primary: #e5e7eb;
-            --text-secondary: rgba(148, 163, 184, 0.92);
-            --text-muted: rgba(148, 163, 184, 0.7);
-            --danger: #f97373;
-            --danger-soft: rgba(248, 113, 113, 0.16);
-            --warning: #facc15;
-            --success: #4ade80;
-            --overlay: rgba(15, 23, 42, 0.85);
-            --shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.55);
-            --shadow-subtle: 0 10px 25px rgba(15, 23, 42, 0.45);
-            --glass-blur: blur(24px);
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-primary);
-            min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* Background gradient & mesh */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.12), transparent 50%),
-                radial-gradient(circle at 100% 0%, rgba(168, 85, 247, 0.14), transparent 55%),
-                radial-gradient(circle at 50% 100%, rgba(45, 212, 191, 0.12), transparent 55%);
-            opacity: 0.9;
-            pointer-events: none;
-            z-index: -2;
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(circle at 50% 10%, rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.95));
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .page-shell {
-            position: relative;
-            min-height: 100vh;
-            padding: 28px 20px 32px;
-            max-width: 1150px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        @media (min-width: 1024px) {
-            .page-shell {
-                padding: 30px 8px 34px;
-                gap: 24px;
-            }
-        }
-
-        /* Header */
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-            z-index: 2;
-        }
-
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-mark {
-            width: 32px;
-            height: 32px;
-            border-radius: 999px;
-            background:
-                radial-gradient(circle at 30% 30%, rgba(248, 250, 252, 0.98), rgba(226, 232, 240, 0.3)),
-                conic-gradient(from 210deg, #38bdf8, #a855f7, #f97316, #22c55e, #38bdf8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow:
-                0 0 0 0.7px rgba(15, 23, 42, 0.7),
-                0 12px 30px rgba(15, 23, 42, 0.9),
-                0 0 18px rgba(56, 189, 248, 0.45);
-        }
-
-        .logo-mark-inner {
-            width: 18px;
-            height: 18px;
-            border-radius: 999px;
-            background: radial-gradient(circle at 30% 20%, rgba(15, 23, 42, 0.3), rgba(15, 23, 42, 0.95));
-            border: 1px solid rgba(15, 23, 42, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .logo-mark-inner::before {
-            content: '';
-            position: absolute;
-            width: 80%;
-            height: 80%;
-            border-radius: inherit;
-            background: conic-gradient(from 200deg, rgba(56, 189, 248, 0.4), rgba(168, 85, 247, 0.85), rgba(56, 189, 248, 0.4));
-            opacity: 0.7;
-            mix-blend-mode: screen;
-        }
-
-        .logo-mark-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 999px;
-            background: #e5e7eb;
-            position: relative;
-            box-shadow:
-                0 0 12px rgba(248, 250, 252, 0.9),
-                0 0 25px rgba(129, 140, 248, 0.85);
-        }
-
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .logo-title-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .logo-title {
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: -0.03em;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .logo-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 999px;
-            background: linear-gradient(135deg, #38bdf8, #a855f7);
-            box-shadow: 0 0 10px rgba(129, 140, 248, 0.85);
-        }
-
-        .logo-beta {
-            font-size: 11px;
-            padding: 3px 7px;
-            border-radius: 999px;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(148, 163, 184, 0.5);
-            color: rgba(148, 163, 184, 0.95);
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-
-        .logo-subtitle {
-            font-size: 12px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .logo-subtitle-dot {
-            width: 3px;
-            height: 3px;
-            border-radius: 999px;
-            background: rgba(148, 163, 184, 0.7);
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 10px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.5);
-            background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.25), rgba(15, 23, 42, 0.9));
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.7);
-        }
-
-        .status-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 999px;
-            background: conic-gradient(from 190deg, #22c55e, #4ade80, #22c55e);
-            box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
-            position: relative;
-        }
-
-        .status-dot::after {
-            content: '';
-            position: absolute;
-            inset: -4px;
-            border-radius: inherit;
-            background: radial-gradient(circle, rgba(34, 197, 94, 0.3), transparent);
-            opacity: 0.6;
-        }
-
-        .status-text {
-            font-size: 11px;
-            color: var(--text-secondary);
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-
-        /* Main layout */
-        .page-content {
-            display: grid;
-            grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.25fr);
-            gap: 22px;
-            align-items: flex-start;
-            flex: 1;
-            margin-top: 6px;
-        }
-
-        @media (max-width: 960px) {
-            .page-content {
-                grid-template-columns: minmax(0, 1fr);
-            }
-
-            .panel-secondary {
-                order: -1;
-            }
-        }
-
-        /* Panels */
-        .panel {
-            background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.97));
-            border-radius: 26px;
-            padding: 18px 18px 16px;
-            border: 1px solid rgba(148, 163, 184, 0.25);
-            box-shadow: var(--shadow-soft);
-            backdrop-filter: blur(24px);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .panel::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(circle at 0 100%, rgba(56, 189, 248, 0.09), transparent 60%),
-                radial-gradient(circle at 100% 0, rgba(167, 139, 250, 0.1), transparent 60%);
-            opacity: 0.9;
-            pointer-events: none;
-        }
-
-        .panel-inner {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Panel Headers */
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-        }
-
-        .panel-title-block {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .panel-title-row {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-        }
-
-        .panel-title {
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: -0.03em;
-        }
-
-        .panel-pill {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.6);
-            color: rgba(148, 163, 184, 0.95);
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .panel-pill-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 999px;
-            background: linear-gradient(135deg, #38bdf8, #a855f7);
-        }
-
-        .panel-subtitle {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .panel-subtitle b {
-            color: rgba(248, 250, 252, 0.95);
-            font-weight: 500;
-        }
-
-        /* Input area */
-        .hypothesis-card {
-            border-radius: 18px;
-            background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.97));
-            border: 1px solid rgba(148, 163, 184, 0.3);
-            padding: 14px 14px 12px;
-            margin-bottom: 10px;
-            box-shadow: var(--shadow-subtle);
-            position: relative;
-        }
-
-        .hypothesis-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                linear-gradient(to bottom right, rgba(56, 189, 248, 0.08), transparent 45%),
-                linear-gradient(to top right, rgba(168, 85, 247, 0.08), transparent 45%);
-            opacity: 0.92;
-            pointer-events: none;
-        }
-
-        .hypothesis-card-inner {
-            position: relative;
-            z-index: 1;
-        }
-
-        .hypothesis-label-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .hypothesis-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .hypothesis-badge {
-            padding: 3px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.5);
-            background: rgba(15, 23, 42, 0.9);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-        }
-
-        .hypothesis-badge-dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 999px;
-            background: conic-gradient(from 210deg, #22c55e, #4ade80, #22c55e);
-            box-shadow: 0 0 12px rgba(34, 197, 94, 0.7);
-        }
-
-        .hypothesis-context {
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.9);
-        }
-
-        .hypothesis-input-row {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 8px;
-            align-items: flex-end;
-        }
-
-        .hypothesis-input-container {
-            position: relative;
-        }
-
-        .hypothesis-input {
-            width: 100%;
-            padding: 12px 12px 11px 11px;
-            border-radius: 12px;
-            border: 1px solid rgba(148, 163, 184, 0.5);
-            background: rgba(15, 23, 42, 0.9);
-            color: var(--text-primary);
-            font-size: 13px;
-            resize: none;
-            min-height: 60px;
-            max-height: 140px;
-            line-height: 1.5;
-            transition: all 0.2s ease;
-        }
-
-        .hypothesis-input::placeholder {
-            color: rgba(148, 163, 184, 0.6);
-        }
-
-        .hypothesis-input:focus {
-            outline: none;
-            border-color: rgba(56, 189, 248, 0.85);
-            box-shadow:
-                0 0 0 1px rgba(56, 189, 248, 0.4),
-                0 10px 30px rgba(15, 23, 42, 0.85);
-        }
-
-        .input-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 7px;
-        }
-
-        .input-hints {
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.9);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .input-hints span {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .input-hints-icon {
-            width: 14px;
-            height: 14px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            color: rgba(148, 163, 184, 0.9);
-        }
-
-        .input-tokens {
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.9);
-        }
-
-        .search-button {
-            padding: 14px 13px;
-            border-radius: 14px;
-            background: radial-gradient(circle at 0 0, rgba(6, 182, 212, 0.15), rgba(56, 189, 248, 0.3));
-            border: 1px solid rgba(56, 189, 248, 0.8);
-            color: #e5e7eb;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            white-space: nowrap;
-            transition: all 0.18s ease-out;
-            box-shadow:
-                0 10px 30px rgba(8, 47, 73, 0.85),
-                0 0 0 1px rgba(15, 23, 42, 1);
-            position: relative;
-            min-width: 46px;
-        }
-
-        .search-button:hover {
-            transform: translateY(-1px) translateZ(0);
-            box-shadow:
-                0 16px 40px rgba(8, 47, 73, 0.93),
-                0 0 0 1px rgba(15, 23, 42, 1);
-            background: radial-gradient(circle at 0 0, rgba(45, 212, 191, 0.21), rgba(56, 189, 248, 0.36));
-        }
-
-        .search-button:active {
-            transform: translateY(0) translateZ(0);
-            box-shadow:
-                0 10px 28px rgba(8, 47, 73, 0.9),
-                0 0 0 1px rgba(15, 23, 42, 1);
-        }
-
-        .search-button.disabled,
-        .search-button:disabled {
-            opacity: 0.7;
-            cursor: default;
-            transform: translateY(0);
-            box-shadow:
-                0 8px 24px rgba(8, 47, 73, 0.7),
-                0 0 0 1px rgba(15, 23, 42, 1);
-        }
-
-        .search-button-icon {
-            font-size: 18px;
-            line-height: 1;
-        }
-
-        .loading {
-            width: 16px;
-            height: 16px;
-            border-radius: 999px;
-            border: 1.5px solid rgba(226, 232, 240, 0.7);
-            border-top-color: rgba(56, 189, 248, 0.95);
-            animation: spin 0.7s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Research intent chips */
-        .intent-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 10px;
-            margin-top: 4px;
-        }
-
-        .intent-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .intent-chip {
-            font-size: 11px;
-            padding: 4px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.6);
-            background: rgba(15, 23, 42, 0.9);
-            color: rgba(148, 163, 184, 0.98);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .intent-chip i {
-            font-size: 10px;
-            opacity: 0.95;
-        }
-
-        .intent-chip strong {
-            color: rgba(248, 250, 252, 0.98);
-            font-weight: 500;
-        }
-
-        .intent-hint {
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.9);
-            text-align: right;
-        }
-
-        /* Result section */
-        .results-section {
-            margin-top: 10px;
-            border-radius: 18px;
-            border: 1px dashed rgba(148, 163, 184, 0.4);
-            background: radial-gradient(circle at 100% 0, rgba(79, 70, 229, 0.09), rgba(15, 23, 42, 0.96));
-            padding: 12px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .results-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.14), transparent 60%),
-                radial-gradient(circle at 100% 100%, rgba(15, 23, 42, 0.7), transparent 60%);
-            opacity: 0.9;
-            pointer-events: none;
-        }
-
-        .results-section-inner {
-            position: relative;
-            z-index: 1;
-        }
-
-        .results-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .results-title-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .results-title-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 999px;
-            background: conic-gradient(from 210deg, rgba(56, 189, 248, 1), rgba(168, 85, 247, 1), rgba(56, 189, 248, 1));
-            box-shadow: 0 0 14px rgba(59, 130, 246, 0.9);
-        }
-
-        .results-title {
-            font-size: 13px;
-            font-weight: 500;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-            color: rgba(226, 232, 240, 0.98);
-        }
-
-        .results-meta {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.9);
-        }
-
-        .results-meta-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 3px 7px;
-            border-radius: 999px;
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.5);
-        }
-
-        .results-meta-pill-dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 999px;
-            background: rgba(52, 211, 153, 0.95);
-            box-shadow: 0 0 12px rgba(52, 211, 153, 0.9);
-        }
-
-        .results-body {
-            border-radius: 12px;
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(31, 41, 55, 0.9);
-            padding: 10px 9px;
-            max-height: 345px;
-            overflow-y: auto;
-        }
-
-        .results-body::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .results-body::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .results-body::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, rgba(148, 163, 184, 0.7), rgba(75, 85, 99, 0.9));
-            border-radius: 999px;
-        }
-
-        .results-placeholder {
-            padding: 14px 10px 10px;
-            text-align: left;
-        }
-
-        .results-placeholder-title {
-            font-size: 12px;
-            font-weight: 500;
-            color: rgba(226, 232, 240, 0.98);
-            margin-bottom: 6px;
-        }
-
-        .results-placeholder-text {
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.9);
-            margin-bottom: 10px;
-        }
-
-        .results-hint-list {
-            display: grid;
-            gap: 6px;
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.92);
-        }
-
-        .results-hint-item {
-            display: flex;
-            gap: 6px;
-            align-items: flex-start;
-        }
-
-        .results-hint-bullet {
-            font-size: 13px;
-            line-height: 1.3;
-            color: rgba(94, 234, 212, 0.9);
-        }
-
-        .results-hint-key {
-            color: rgba(226, 232, 240, 0.97);
-            font-weight: 500;
-        }
-
-        /* Result items */
-        .results-list {
-            display: grid;
-            gap: 8px;
-        }
-
-        .result-item {
-            border-radius: 11px;
-            border: 1px solid rgba(55, 65, 81, 0.95);
-            background: radial-gradient(circle at 0 0, rgba(30, 64, 175, 0.18), rgba(15, 23, 42, 0.97));
-            padding: 9px 9px 8px;
-            display: grid;
-            gap: 4px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .result-item::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                linear-gradient(to right, rgba(56, 189, 248, 0.07), transparent 40%),
-                radial-gradient(circle at 100% 0, rgba(129, 140, 248, 0.06), transparent 55%);
-            opacity: 0.9;
-            pointer-events: none;
-        }
-
-        .result-item-inner {
-            position: relative;
-            z-index: 1;
-        }
-
-        .result-title-row {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 6px;
-        }
-
-        .result-title-text {
-            font-size: 13px;
-            font-weight: 500;
-            color: rgba(226, 232, 240, 0.98);
-        }
-
-        .result-badge {
-            font-size: 10px;
-            padding: 3px 6px;
-            border-radius: 999px;
-            border: 1px solid rgba(56, 189, 248, 0.7);
-            background: rgba(15, 23, 42, 0.95);
-            color: rgba(226, 232, 240, 0.98);
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-        }
-
-        .result-badge-dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 999px;
-            background: rgba(56, 189, 248, 0.95);
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.9);
-        }
-
-        .result-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.95);
-        }
-
-        .result-meta span {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .result-meta-dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 999px;
-            background: rgba(148, 163, 184, 0.85);
-        }
-
-        .result-abstract {
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.96);
-            line-height: 1.45;
-        }
-
-        .result-foot {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 3px;
-        }
-
-        .result-tags {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        .result-tag {
-            font-size: 10px;
-            padding: 2px 7px;
-            border-radius: 999px;
-            border: 1px solid rgba(55, 65, 81, 0.95);
-            background: rgba(15, 23, 42, 0.95);
-            color: rgba(148, 163, 184, 0.96);
-        }
-
-        .result-actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        .result-link,
-        .result-save {
-            font-size: 10px;
-            padding: 3px 6px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.7);
-            background: rgba(15, 23, 42, 0.95);
-            color: rgba(226, 232, 240, 0.98);
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .result-link-icon {
-            font-size: 11px;
-        }
-
-        /* Right panel - recent & templates */
-        .panel-secondary {
-            background: radial-gradient(circle at 100% 0, rgba(55, 65, 81, 0.35), rgba(15, 23, 42, 0.98));
-        }
-
-        .panel-secondary::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(circle at 100% 0, rgba(56, 189, 248, 0.18), transparent 60%),
-                radial-gradient(circle at 0 100%, rgba(129, 140, 248, 0.14), transparent 65%);
-            opacity: 0.9;
-            pointer-events: none;
-        }
-
-        .quick-stats {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 7px;
-            margin-bottom: 10px;
-        }
-
-        .stat-card {
-            border-radius: 12px;
-            padding: 7px 8px 6px;
-            border: 1px solid rgba(55, 65, 81, 0.95);
-            background: rgba(15, 23, 42, 0.95);
-            font-size: 11px;
-        }
-
-        .stat-label {
-            color: rgba(148, 163, 184, 0.95);
-            margin-bottom: 2px;
-        }
-
-        .stat-value {
-            font-weight: 500;
-            color: rgba(226, 232, 240, 0.98);
-        }
-
-        .stat-pill {
-            font-size: 10px;
-            padding: 1px 5px;
-            border-radius: 999px;
-            border: 1px solid rgba(55, 65, 81, 0.9);
-            background: rgba(15, 23, 42, 0.95);
-            color: rgba(148, 163, 184, 0.95);
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin-top: 2px;
-        }
-
-        .stat-pill-dot {
-            width: 3px;
-            height: 3px;
-            border-radius: 999px;
-            background: rgba(52, 211, 153, 0.9);
-        }
-
-        .section {
-            margin-bottom: 12px;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 7px;
-        }
-
-        .section-title {
-            font-size: 12px;
-            font-weight: 500;
-            color: rgba(226, 232, 240, 0.98);
-        }
-
-        .section-subtitle {
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.9);
-        }
-
-        .section-action {
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.95);
-            cursor: pointer;
-            padding: 3px 6px;
-            border-radius: 999px;
-            border: 1px solid rgba(51, 65, 85, 0.95);
-            background: rgba(15, 23, 42, 0.96);
-        }
-
-        .recent-list {
-            border-radius: 11px;
-            background: rgba(15, 23, 42, 0.96);
-            border: 1px solid rgba(31, 41, 55, 0.95);
-            padding: 7px 7px 7px;
-            max-height: 140px;
-            overflow-y: auto;
-            display: grid;
-            gap: 4px;
-        }
-
-        .recent-item {
-            font-size: 11px;
-            padding: 7px 7px 6px;
-            border-radius: 9px;
-            border: 1px solid rgba(55, 65, 81, 0.95);
-            background: radial-gradient(circle at 0 0, rgba(30, 64, 175, 0.14), rgba(15, 23, 42, 0.97));
-            display: grid;
-            gap: 3px;
-        }
-
-        .recent-title {
-            color: rgba(226, 232, 240, 0.98);
-            font-weight: 500;
-        }
-
-        .recent-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: rgba(148, 163, 184, 0.95);
-        }
-
-        .recent-intent {
-            font-size: 10px;
-            color: rgba(148, 163, 184, 0.95);
-        }
-
-        .template-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 7px;
-        }
-
-        .template-card {
-            border-radius: 10px;
-            padding: 8px 7px 7px;
-            border: 1px solid rgba(55, 65, 81, 0.95);
-            background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.16), rgba(15, 23, 42, 0.97));
-            font-size: 11px;
-            display: grid;
-            gap: 3px;
-            cursor: pointer;
-        }
-
-        .template-card-title {
-            color: rgba(226, 232, 240, 0.98);
-            font-weight: 500;
-        }
-
-        .template-card-text {
-            font-size: 10px;
-            color: rgba(148, 163, 184, 0.95);
-        }
-
-        .template-pill {
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 999px;
-            border: 1px solid rgba(56, 189, 248, 0.8);
-            background: rgba(15, 23, 42, 0.98);
-            color: rgba(226, 232, 240, 0.98);
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            justify-self: flex-start;
-        }
-
-        .template-pill-dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 999px;
-            background: rgba(56, 189, 248, 0.95);
-        }
-
-        .session-meta {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 6px;
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.9);
-        }
-
-        .session-id {
-            font-family: 'SF Mono', ui-monospace, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-            font-size: 10px;
-            padding: 3px 7px;
-            border-radius: 999px;
-            border: 1px solid rgba(51, 65, 85, 0.95);
-            background: rgba(15, 23, 42, 0.97);
-            color: rgba(148, 163, 184, 0.95);
-        }
-
-        .session-time {
-            font-size: 11px;
-        }
-
-        /* Footer */
-        .page-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: auto;
-            font-size: 11px;
-            color: rgba(148, 163, 184, 0.9);
-            padding-top: 4px;
-        }
-
-        .footer-left, .footer-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .footer-pill {
-            padding: 3px 7px;
-            border-radius: 999px;
-            border: 1px solid rgba(51, 65, 85, 0.95);
-            background: rgba(15, 23, 42, 0.97);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .footer-pill-dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 999px;
-            background: rgba(52, 211, 153, 0.9);
-            box-shadow: 0 0 10px rgba(52, 211, 153, 0.9);
-        }
-
-        .footer-keyboard {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .kbd {
-            font-family: 'SF Mono', ui-monospace, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 6px;
-            border: 1px solid rgba(55, 65, 81, 0.95);
-            background: rgba(15, 23, 42, 0.98);
-        }
-
-        /* Blur orbs for depth */
-        .orb {
-            position: fixed;
-            border-radius: 999px;
-            filter: blur(45px);
-            pointer-events: none;
-            z-index: -1;
-            opacity: 0.7;
-        }
-
-        .orb-1 {
-            width: 260px;
-            height: 260px;
-            background: rgba(56, 189, 248, 0.4);
-            top: -70px;
-            left: -60px;
-        }
-
-        .orb-2 {
-            width: 300px;
-            height: 300px;
-            background: rgba(168, 85, 247, 0.45);
-            top: -90px;
-            right: -80px;
-        }
-
-        .orb-3 {
-            width: 320px;
-            height: 320px;
-            background: rgba(45, 212, 191, 0.45);
-            bottom: -150px;
-            left: -80px;
-        }
-
-        /* Mobile adjustments */
-        @media (max-width: 640px) {
-            .page-shell {
-                padding: 16px 14px 18px;
-            }
-
-            .panel {
-                border-radius: 18px;
-                padding: 14px 13px 12px;
-            }
-
-            .page-content {
-                gap: 16px;
-            }
-
-            .hypothesis-input {
-                min-height: 70px;
-            }
-
-            .results-body {
-                max-height: 260px;
-            }
-
-            .quick-stats {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                scroll-behavior: auto !important;
-                animation: none !important;
-                transition: none !important;
-            }
+            --gradient-1: linear-gradient(135deg, #ffd1dc 0%, #ffb5c5 100%);
+            --gradient-2: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            --gradient-3: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            --gradient-4: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+            --gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --bg-dark: #f5f0f6;
+            --text-primary: #2d3561;
+            --text-secondary: rgba(45, 53, 97, 0.7);
+        }
+
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-dark); color: var(--text-primary); min-height: 100vh; position: relative; overflow-x: hidden; }
+        .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.7; overflow: hidden; pointer-events: none; }
+        .bg-gradient { position: absolute; border-radius: 50%; filter: blur(120px); animation: float 30s infinite ease-in-out; }
+        .bg-gradient-1 { width: 800px; height: 800px; background: var(--gradient-1); top: -300px; left: -200px; animation-delay: 0s; }
+        .bg-gradient-2 { width: 700px; height: 700px; background: var(--gradient-3); bottom: -250px; right: -200px; animation-delay: 10s; }
+        .bg-gradient-3 { width: 600px; height: 600px; background: var(--gradient-4); top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: 20s; }
+        .bg-gradient-4 { width: 500px; height: 500px; background: var(--gradient-2); top: 30%; right: 10%; animation-delay: 15s; }
+        .bg-gradient-5 { width: 550px; height: 550px; background: linear-gradient(135deg, #ffb88c 0%, #ff9a76 100%); bottom: 10%; left: 20%; animation-delay: 5s; }
+        
+        @keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; } 50% { transform: translate(-50px, 100px) scale(0.95); opacity: 0.6; } 75% { transform: translate(150px, 50px) scale(1.05); opacity: 0.75; } }
+
+        .header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 4rem; }
+        .logo { font-size: 1.6rem; font-weight: 800; background: var(--gradient-accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.02em; }
+
+        .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+        .hero { text-align: center; padding: 10rem 0 2rem; animation: fadeInUp 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hero-title { font-size: 5.5rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1.15; margin-bottom: 1.8rem; background: linear-gradient(135deg, #2d3561 0%, rgba(45, 53, 97, 0.8) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero-highlight { background: var(--gradient-accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; position: relative; display: inline-block; filter: drop-shadow(0 0 40px rgba(240, 147, 251, 0.4)); }
+        .hero-subtitle { font-size: 1.4rem; color: var(--text-secondary); max-width: 680px; margin: 0 auto; line-height: 1.6; }
+
+        .search-section { margin-top: 8rem; padding-bottom: 6rem; animation: fadeInUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both; }
+        .search-input-wrapper { position: relative; z-index: 1; }
+
+        .search-input { width: 100%; background: rgba(255, 255, 255, 0.35); backdrop-filter: blur(40px); border: 1.5px solid rgba(255, 255, 255, 0.5); border-radius: 30px; padding: 1.8rem 5rem 1.8rem 2rem; height: 140px; line-height: 1.6; font-size: 1.15rem; color: var(--text-primary); font-family: inherit; resize: none; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); font-weight: 400; box-shadow: 0 8px 32px rgba(167, 139, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+        .search-input:focus { outline: none; border-color: rgba(167, 139, 250, 0.5); background: rgba(255, 255, 255, 0.45); box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.15), 0 12px 40px rgba(167, 139, 250, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.4); transform: translateY(-2px); }
+        .search-button { position: absolute; bottom: 20px; right: 20px; width: 50px; height: 50px; background: rgba(240, 147, 251, 0.7); backdrop-filter: blur(10px); border: 1.5px solid rgba(255, 255, 255, 0.3); border-radius: 50%; color: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 16px rgba(240, 147, 251, 0.25); z-index: 10; }
+        .search-button:hover { transform: scale(1.05); background: rgba(240, 147, 251, 0.8); }
+        .search-button svg { width: 20px; height: 20px; fill: currentColor; margin-left: 2px; }
+
+        .results-container { margin-top: 4rem; display: none; }
+        .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .results-title { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; }
+        .results-count { font-size: 0.9rem; font-weight: 600; color: rgba(196, 181, 253, 0.9); padding: 0.6rem 1.2rem; background: rgba(167, 139, 250, 0.1); border: 1px solid rgba(167, 139, 250, 0.25); border-radius: 20px; }
+        
+        .result-item { background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(30px); border: 1.5px solid rgba(167, 139, 250, 0.15); border-radius: 20px; padding: 2.2rem; margin-bottom: 1.5rem; transition: all 0.4s; cursor: pointer; }
+        .result-item:hover { border-color: rgba(167, 139, 250, 0.4); transform: translateY(-6px); box-shadow: 0 20px 50px rgba(10, 10, 15, 0.1); background: rgba(255, 255, 255, 0.1); }
+        .result-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary); }
+        .result-meta { display: flex; gap: 1.8rem; font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1.2rem; }
+        .result-abstract { color: var(--text-secondary); line-height: 1.75; margin-bottom: 1.2rem; font-size: 0.98rem; }
+        .result-score { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.1rem; background: rgba(167, 139, 250, 0.12); border: 1.5px solid rgba(167, 139, 250, 0.3); border-radius: 20px; font-size: 0.85rem; font-weight: 700; color: #8b5cf6; }
+
+        /* 차트 영역 스타일 */
+        .chart-wrapper {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(40px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+        @media (max-width: 768px) {
+            .header { padding: 1.2rem 1.5rem; }
+            .hero-title { font-size: 3.2rem; }
+            .search-input { font-size: 1rem; padding: 1.5rem 1.5rem 4rem 1.5rem; }
         }
     </style>
 </head>
 <body>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
+    <div class="bg-animation">
+        <div class="bg-gradient bg-gradient-1"></div>
+        <div class="bg-gradient bg-gradient-2"></div>
+        <div class="bg-gradient bg-gradient-3"></div>
+        <div class="bg-gradient bg-gradient-4"></div>
+        <div class="bg-gradient bg-gradient-5"></div>
+    </div>
 
-    <div class="page-shell">
-        <header class="page-header">
-            <div class="logo-area">
-                <div class="logo-mark">
-                    <div class="logo-mark-inner">
-                        <div class="logo-mark-dot"></div>
-                    </div>
-                </div>
-                <div class="logo-text">
-                    <div class="logo-title-row">
-                        <div class="logo-title">
-                            hafik
-                            <div class="logo-dot"></div>
-                        </div>
-                        <div class="logo-beta">HYPOTHESIS ENGINE</div>
-                    </div>
-                    <div class="logo-subtitle">
-                        <span class="logo-subtitle-dot"></span>
-                        Hypothesis → Evidence, in one semantic pass
+    <header class="header">
+        <div class="logo">Hafik</div>
+    </header>
+
+    <div class="container">
+        <section class="hero">
+            <h1 class="hero-title">
+                Prove Your<br><span class="hero-highlight">Hypothesis</span>
+            </h1>
+            <p class="hero-subtitle">
+                Enter your research hypothesis and discover scientific papers that support your theory
+            </p>
+        </section>
+
+        <section class="search-section">
+            <div class="search-card">
+                <div class="search-input-container">
+                    <div class="search-input-wrapper">
+                        <textarea 
+                            id="hypothesis-input" 
+                            class="search-input" 
+                            placeholder="E.g. You wake up before the alarm only on days you could’ve slept in"
+                            rows="3"
+                        ></textarea>
+                        <button class="search-button" id="search-button">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
-            <div class="header-right">
-                <div class="status-pill">
-                    <div class="status-dot"></div>
-                    <div class="status-text">Vector search ready</div>
+
+            <div class="results-container" id="results-container">
+                <div class="results-header">
+                    <h2 class="results-title">Research Results</h2>
+                    <span class="results-count" id="results-count"></span>
                 </div>
+
+                <div class="chart-wrapper" id="chart-wrapper" style="display: none;">
+                    <canvas id="trendChart" style="max-height: 250px;"></canvas>
+                </div>
+
+                <div id="results-list"></div>
             </div>
-        </header>
-
-        <main class="page-content">
-            <!-- Left panel: Hypothesis + Results -->
-            <section class="panel">
-                <div class="panel-inner">
-                    <div class="panel-header">
-                        <div class="panel-title-block">
-                            <div class="panel-title-row">
-                                <div class="panel-title">Hypothesis workspace</div>
-                                <div class="panel-pill">
-                                    <div class="panel-pill-dot"></div>
-                                    En → Semantic → Papers
-                                </div>
-                            </div>
-                            <div class="panel-subtitle">
-                                Describe your hypothesis in <b>natural English</b>. Hafik will map it to the closest evidence in literature.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="hypothesis-card">
-                        <div class="hypothesis-card-inner">
-                            <div class="hypothesis-label-row">
-                                <div class="hypothesis-label">
-                                    <span class="input-hints-icon">?</span>
-                                    Hypothesis in natural language
-                                </div>
-                                <div class="hypothesis-badge">
-                                    <div class="hypothesis-badge-dot"></div>
-                                    Semantic search active
-                                </div>
-                            </div>
-
-                            <div class="hypothesis-input-row">
-                                <div class="hypothesis-input-container">
-                                    <textarea
-                                        id="hypothesis-input"
-                                        class="hypothesis-input"
-                                        placeholder="Example: Daily intake of L-theanine reduces perceived stress levels in adults with high baseline anxiety, especially when combined with moderate aerobic exercise."
-                                    ></textarea>
-                                    <div class="input-footer">
-                                        <div class="input-hints">
-                                            <span>
-                                                <span class="input-hints-icon">i</span>
-                                                Be specific about population & intervention
-                                            </span>
-                                        </div>
-                                        <div class="input-tokens" id="token-count">0 chars</div>
-                                    </div>
-                                </div>
-                                <button id="search-button" class="search-button">
-                                    <span class="search-button-icon">→</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="intent-row">
-                        <div class="intent-chips">
-                            <div class="intent-chip">
-                                <i>🎯</i>
-                                <strong>Mechanism</strong>
-                            </div>
-                            <div class="intent-chip">
-                                <i>📊</i>
-                                <strong>Effect size</strong>
-                            </div>
-                            <div class="intent-chip">
-                                <i>🧪</i>
-                                <strong>Study design</strong>
-                            </div>
-                        </div>
-                        <div class="intent-hint">
-                            Hafik will prioritize <b>stress & anxiety</b> interventions for this session
-                        </div>
-                    </div>
-
-                    <div class="results-section">
-                        <div class="results-section-inner">
-                            <div class="results-header">
-                                <div class="results-title-row">
-                                    <div class="results-title-dot"></div>
-                                    <div class="results-title">Top matching papers</div>
-                                </div>
-                                <div class="results-meta">
-                                    <div class="results-meta-pill">
-                                        <div class="results-meta-pill-dot"></div>
-                                        Semantic similarity
-                                    </div>
-                                    <div id="results-count">0 matches</div>
-                                </div>
-                            </div>
-
-                            <div class="results-body" id="results">
-                                <div class="results-placeholder">
-                                    <div class="results-placeholder-title">
-                                        Waiting for your first hypothesis
-                                    </div>
-                                    <div class="results-placeholder-text">
-                                        Once you describe your hypothesis, Hafik will:
-                                    </div>
-                                    <div class="results-hint-list">
-                                        <div class="results-hint-item">
-                                            <div class="results-hint-bullet">1.</div>
-                                            <div>
-                                                <span class="results-hint-key">Encode it into a dense vector</span> using a scientific-tuned language model
-                                            </div>
-                                        </div>
-                                        <div class="results-hint-item">
-                                            <div class="results-hint-bullet">2.</div>
-                                            <div>
-                                                <span class="results-hint-key">Search your PostgreSQL + pgvector store</span> for semantically similar studies
-                                            </div>
-                                        </div>
-                                        <div class="results-hint-item">
-                                            <div class="results-hint-bullet">3.</div>
-                                            <div>
-                                                <span class="results-hint-key">Return ranked papers</span> with abstracts, metadata, and similarity scores
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Optional footer hint -->
-                            <div class="input-footer" style="margin-top: 8px;">
-                                <div class="input-hints">
-                                    <span>
-                                        <span class="input-hints-icon">⚙</span>
-                                        Backed by PostgreSQL + pgvector
-                                    </span>
-                                </div>
-                                <div class="input-tokens" id="latency-hint">Waiting for first query…</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Right panel: Recent & Templates -->
-            <section class="panel panel-secondary">
-                <div class="panel-inner">
-                    <div class="panel-header">
-                        <div class="panel-title-block">
-                            <div class="panel-title-row">
-                                <div class="panel-title">Session context</div>
-                                <div class="panel-pill">
-                                    <div class="panel-pill-dot"></div>
-                                    PG + pgvector
-                                </div>
-                            </div>
-                            <div class="panel-subtitle">
-                                Track what you've asked & reuse proven hypothesis patterns.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="quick-stats">
-                        <div class="stat-card">
-                            <div class="stat-label">Current session</div>
-                            <div class="stat-value" id="stat-queries">0 queries</div>
-                            <div class="stat-pill">
-                                <div class="stat-pill-dot"></div>
-                                Live semantic search
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Matched domains</div>
-                            <div class="stat-value" id="stat-domains">—</div>
-                            <div class="stat-pill">
-                                <div class="stat-pill-dot"></div>
-                                Auto-detected
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Engine</div>
-                            <div class="stat-value">Sci encoder</div>
-                            <div class="stat-pill">
-                                <div class="stat-pill-dot"></div>
-                                all-MiniLM-L6-v2
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="section">
-                        <div class="section-header">
-                            <div>
-                                <div class="section-title">Recent hypotheses</div>
-                                <div class="section-subtitle">Only in this browser session</div>
-                            </div>
-                            <button class="section-action" id="clear-history">Clear</button>
-                        </div>
-                        <div class="recent-list" id="recent-list">
-                            <!-- Recent items will be injected here -->
-                        </div>
-                    </div>
-
-                    <div class="section">
-                        <div class="section-header">
-                            <div>
-                                <div class="section-title">Template starters</div>
-                                <div class="section-subtitle">Click to prefill the hypothesis box</div>
-                            </div>
-                        </div>
-                        <div class="template-grid">
-                            <div class="template-card" data-template="Regular consumption of [compound] reduces [symptom] in [population] compared to placebo over [time frame].">
-                                <div class="template-card-title">Intervention vs placebo</div>
-                                <div class="template-card-text">
-                                    Generic RCT framing for supplements, drugs, or lifestyle changes.
-                                </div>
-                                <div class="template-pill">
-                                    <div class="template-pill-dot"></div>
-                                    RCT pattern
-                                </div>
-                            </div>
-                            <div class="template-card" data-template="Higher baseline levels of [biomarker] predict increased risk of [outcome] within [time frame] in [population].">
-                                <div class="template-card-title">Biomarker → Outcome</div>
-                                <div class="template-card-text">
-                                    For correlational or prognostic hypotheses.
-                                </div>
-                                <div class="template-pill">
-                                    <div class="template-pill-dot"></div>
-                                    Cohort pattern
-                                </div>
-                            </div>
-                            <div class="template-card" data-template="Combining [intervention A] with [intervention B] produces a greater reduction in [symptom/outcome] than either alone in [population].">
-                                <div class="template-card-title">Synergy hypothesis</div>
-                                <div class="template-card-text">
-                                    Multi-intervention exploratory patterns.
-                                </div>
-                                <div class="template-pill">
-                                    <div class="template-pill-dot"></div>
-                                    Combo pattern
-                                </div>
-                            </div>
-                            <div class="template-card" data-template="In [population], [exposure] is associated with [directional effect] in [outcome], after adjusting for [confounders].">
-                                <div class="template-card-title">Exposure → Effect</div>
-                                <div class="template-card-text">
-                                    Environmental, behavioral, or observational scenarios.
-                                </div>
-                                <div class="template-pill">
-                                    <div class="template-pill-dot"></div>
-                                    Observational
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="session-meta">
-                        <div class="session-id" id="session-id">
-                            session:hypothesis-0001
-                        </div>
-                        <div class="session-time" id="session-time">
-                            Live · 0 min
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <footer class="page-footer">
-            <div class="footer-left">
-                <div class="footer-pill">
-                    <div class="footer-pill-dot"></div>
-                    Backed by PostgreSQL + pgvector
-                </div>
-                <span>Local prototype · Not connected to real papers yet</span>
-            </div>
-            <div class="footer-right">
-                <div class="footer-keyboard">
-                    <span class="kbd">⌘</span>
-                    <span class="kbd">Enter</span>
-                    <span>to submit</span>
-                </div>
-                <span>Built for exploratory research</span>
-            </div>
-        </footer>
+        </section>
     </div>
 
     <script>
         const searchInput = document.getElementById('hypothesis-input');
         const searchButton = document.getElementById('search-button');
-        const resultsContainer = document.getElementById('results');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsList = document.getElementById('results-list');
         const resultsCount = document.getElementById('results-count');
-        const tokenCount = document.getElementById('token-count');
-        const latencyHint = document.getElementById('latency-hint');
-        const recentList = document.getElementById('recent-list');
-        const clearHistoryButton = document.getElementById('clear-history');
-        const statQueries = document.getElementById('stat-queries');
-        const statDomains = document.getElementById('stat-domains');
-        const sessionIdElement = document.getElementById('session-id');
-        const sessionTimeElement = document.getElementById('session-time');
+        
+        // 차트 관련 변수
+        const chartWrapper = document.getElementById('chart-wrapper');
+        let myChart = null;
 
-        // State
-        let queryCount = 0;
-        let sessionStartTime = Date.now();
-        let recentHypotheses = [];
+        searchButton.addEventListener('click', async () => {
+            const hypothesis = searchInput.value.trim();
+            if (hypothesis.length < 2) { alert('Please enter a hypothesis.'); return; }
 
-        // Session ID – simple random suffix
-        const sessionSuffix = Math.random().toString(36).substring(2, 8);
-        sessionIdElement.textContent = `session:hypothesis-${sessionSuffix}`;
+            const originalContent = searchButton.innerHTML;
+            searchButton.disabled = true;
+            searchButton.innerHTML = '<div class="loading"></div>';
+            resultsContainer.style.display = 'none';
+            chartWrapper.style.display = 'none'; // 검색 시작 시 차트 숨김
 
-        // Update session time every 30s
-        setInterval(() => {
-            const mins = Math.floor((Date.now() - sessionStartTime) / 60000);
-            sessionTimeElement.textContent = `Live · ${mins} min`;
-        }, 30000);
+            try {
+                const response = await fetch(`/api/v1/search?q=${encodeURIComponent(hypothesis)}`);
+                const results = await response.json();
 
-        // Token/char count
-        searchInput.addEventListener('input', () => {
-            const length = searchInput.value.length;
-            tokenCount.textContent = `${length} chars`;
+                resultsContainer.style.display = 'block';
+                resultsCount.textContent = `${results.length} papers found`;
+                
+                if (results.length === 0) {
+                    resultsList.innerHTML = '<p style="color: #666; text-align: center;">No relevant papers found with sufficient similarity.</p>';
+                } else {
+                    // ⭐ 1. 차트 그리기 (검색 결과가 있을 때만)
+                    renderChart(results);
+                    chartWrapper.style.display = 'block';
+
+                    // 2. 리스트 그리기
+                    resultsList.innerHTML = results.map(paper => `
+                        <div class="result-item" onclick="window.open('${paper.url}', '_blank')">
+                            <h3 class="result-title">${paper.title}</h3>
+                            <div class="result-meta">
+                                <span>📅 ${paper.year}</span>
+                                <span>👤 ${paper.authors}</span>
+                            </div>
+                            <p class="result-abstract">${paper.abstract}</p>
+                            <span class="result-score">✨ Match: ${paper.similarity}%</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                alert('Failed to connect to the server.');
+            } finally {
+                searchButton.disabled = false;
+                searchButton.innerHTML = originalContent; 
+            }
         });
 
-        // Submit on Cmd+Enter / Ctrl+Enter
+        // ⭐ [추가됨] 차트 그리는 함수
+        function renderChart(papers) {
+            const yearCounts = {};
+            // 연도별 개수 세기
+            papers.forEach(paper => {
+                const year = paper.year;
+                yearCounts[year] = (yearCounts[year] || 0) + 1;
+            });
+
+            // 정렬
+            const sortedYears = Object.keys(yearCounts).sort();
+            const counts = sortedYears.map(year => yearCounts[year]);
+
+            // 기존 차트 파괴 (중복 방지)
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            // 새 차트 생성
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedYears,
+                    datasets: [{
+                        label: 'Papers per Year',
+                        data: counts,
+                        backgroundColor: 'rgba(167, 139, 250, 0.7)',
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Publication Trend (Yearly)',
+                            color: '#2d3561',
+                            font: { size: 14, family: "'Plus Jakarta Sans', sans-serif" }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, precision: 0 },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
         searchInput.addEventListener('keydown', (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 searchButton.click();
             }
         });
-
-        // Template click → fill textarea
-        document.querySelectorAll('.template-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const template = card.getAttribute('data-template');
-                searchInput.value = template;
-                searchInput.focus();
-                searchInput.dispatchEvent(new Event('input'));
-            });
-        });
-
-        // Clear history
-        clearHistoryButton.addEventListener('click', () => {
-            recentHypotheses = [];
-            renderRecent();
-        });
-
-        function renderRecent() {
-            recentList.innerHTML = '';
-            if (recentHypotheses.length === 0) {
-                recentList.innerHTML = `
-                    <div class="results-placeholder-text" style="padding: 4px 2px;">
-                        Your recent hypotheses will appear here.
-                    </div>
-                `;
-                return;
-            }
-
-            recentHypotheses.slice().reverse().forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'recent-item';
-                div.innerHTML = `
-                    <div class="recent-title">${item.text}</div>
-                    <div class="recent-meta">
-                        <span>${item.time}</span>
-                        <span>${item.matches} matches</span>
-                    </div>
-                `;
-                recentList.appendChild(div);
-            });
-        }
-
-        function displayResults(results) {
-            resultsContainer.innerHTML = '';
-
-            if (!results || results.length === 0) {
-                resultsContainer.innerHTML = `
-                    <div class="results-placeholder">
-                        <div class="results-placeholder-title">
-                            No matches yet
-                        </div>
-                        <div class="results-placeholder-text">
-                            Try making your hypothesis more specific, or broaden the scope.
-                        </div>
-                    </div>
-                `;
-                resultsCount.textContent = '0 matches';
-                latencyHint.textContent = 'No results returned.';
-                statDomains.textContent = '—';
-                return;
-            }
-
-            resultsCount.textContent = `${results.length} matches`;
-            const firstDomains = extractDomains(results);
-            statDomains.textContent = firstDomains.length ? firstDomains.join(', ') : 'mixed';
-
-            const list = document.createElement('div');
-            list.className = 'results-list';
-
-            results.forEach(result => {
-                const item = document.createElement('div');
-                item.className = 'result-item';
-
-                const similarityPercent = (result.similarity * 100).toFixed(1);
-
-                item.innerHTML = `
-                    <div class="result-item-inner">
-                        <div class="result-title-row">
-                            <div class="result-title-text">${result.title}</div>
-                            <div class="result-badge">
-                                <div class="result-badge-dot"></div>
-                                ${similarityPercent}% match
-                            </div>
-                        </div>
-                        <div class="result-meta">
-                            <span>
-                                <div class="result-meta-dot"></div>
-                                ${result.authors || 'Unknown authors'}
-                            </span>
-                            <span>
-                                <div class="result-meta-dot"></div>
-                                ${result.year || '—'}
-                            </span>
-                            <span>
-                                <div class="result-meta-dot"></div>
-                                ${result.journal || 'Journal not specified'}
-                            </span>
-                        </div>
-                        <div class="result-abstract">
-                            ${result.abstract || 'No abstract available.'}
-                        </div>
-                        <div class="result-foot">
-                            <div class="result-tags">
-                                ${(result.tags || ['semantics', 'hypothesis-match'])
-                                    .map(tag => `<span class="result-tag">${tag}</span>`)
-                                    .join('')}
-                            </div>
-                            <div class="result-actions">
-                                ${result.url ? `
-                                    <a href="${result.url}" target="_blank" class="result-link">
-                                        <span class="result-link-icon">↗</span>
-                                        Open
-                                    </a>
-                                ` : ''}
-                                <button class="result-save">
-                                    ☆ Save
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                list.appendChild(item);
-            });
-
-            resultsContainer.appendChild(list);
-        }
-
-        function extractDomains(results) {
-            const domains = new Set();
-            results.forEach(r => {
-                if (r.domain) {
-                    domains.add(r.domain);
-                } else if (r.journal) {
-                    if (r.journal.toLowerCase().includes('psychology') || r.journal.toLowerCase().includes('psychiatry')) {
-                        domains.add('psychology');
-                    } else if (r.journal.toLowerCase().includes('neuroscience')) {
-                        domains.add('neuroscience');
-                    } else if (r.journal.toLowerCase().includes('nutrition')) {
-                        domains.add('nutrition');
-                    }
-                }
-            });
-            return Array.from(domains);
-        }
-
-        // 🔥 Search button click → 실제 백엔드 호출
-        searchButton.addEventListener('click', async () => {
-            const hypothesis = searchInput.value.trim();
-            
-            if (hypothesis.length < 10) {
-                alert('Please enter at least 10 characters for your hypothesis.');
-                return;
-            }
-
-            // Loading state
-            searchButton.disabled = true;
-            searchButton.innerHTML = '<div class="loading"></div>';
-
-            const startTime = performance.now();
-
-            try {
-                const response = await fetch("http://127.0.0.1:8000/api/v1/search", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        hypothesis: hypothesis,
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error("API error: " + response.status);
-                }
-
-                const data = await response.json();
-                const elapsed = performance.now() - startTime;
-
-                // Expecting { results: [...] } from backend
-                displayResults(data.results || []);
-                latencyHint.textContent = `Responded in ${elapsed.toFixed(0)} ms`;
-
-                queryCount += 1;
-                statQueries.textContent = `${queryCount} quer${queryCount === 1 ? 'y' : 'ies'}`;
-
-                recentHypotheses.push({
-                    text: hypothesis,
-                    time: new Date().toLocaleTimeString(),
-                    matches: (data.results || []).length
-                });
-                renderRecent();
-
-            } catch (error) {
-                console.error('Search error:', error);
-                alert('검색 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.');
-                latencyHint.textContent = 'Error during search.';
-            } finally {
-                searchButton.disabled = false;
-                searchButton.innerHTML = '<span class="search-button-icon">→</span>';
-            }
-        });
-
-        // Initial render
-        renderRecent();
     </script>
 </body>
 </html>
