@@ -31,3 +31,6 @@ models/
 # vscode 설정파일
 .vscode/
 
+#데이터
+arxiv-metadata-oai-snapshot.json
+

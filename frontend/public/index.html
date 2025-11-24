@@ -64,7 +64,6 @@
         .result-abstract { color: var(--text-secondary); line-height: 1.75; margin-bottom: 1.2rem; font-size: 0.98rem; }
         .result-score { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.1rem; background: rgba(167, 139, 250, 0.12); border: 1.5px solid rgba(167, 139, 250, 0.3); border-radius: 20px; font-size: 0.85rem; font-weight: 700; color: #8b5cf6; }
 
-        /* 차트 영역 스타일 */
         .chart-wrapper {
             background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(40px);
@@ -144,126 +143,153 @@
     </div>
 
     <script>
-        const searchInput = document.getElementById('hypothesis-input');
-        const searchButton = document.getElementById('search-button');
-        const resultsContainer = document.getElementById('results-container');
-        const resultsList = document.getElementById('results-list');
-        const resultsCount = document.getElementById('results-count');
-        
-        // 차트 관련 변수
-        const chartWrapper = document.getElementById('chart-wrapper');
-        let myChart = null;
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('hypothesis-input');
+            const searchButton = document.getElementById('search-button');
+            const resultsContainer = document.getElementById('results-container');
+            const resultsList = document.getElementById('results-list');
+            const resultsCount = document.getElementById('results-count');
+            
+            const chartWrapper = document.getElementById('chart-wrapper');
+            let myChart = null;
 
-        searchButton.addEventListener('click', async () => {
-            const hypothesis = searchInput.value.trim();
-            if (hypothesis.length < 2) { alert('Please enter a hypothesis.'); return; }
+            if (!searchButton) { console.error("Error: search-button element not found!"); return; }
 
-            const originalContent = searchButton.innerHTML;
-            searchButton.disabled = true;
-            searchButton.innerHTML = '<div class="loading"></div>';
-            resultsContainer.style.display = 'none';
-            chartWrapper.style.display = 'none'; // 검색 시작 시 차트 숨김
+            searchButton.addEventListener('click', async () => {
+                const hypothesis = searchInput.value.trim();
+                if (hypothesis.length < 2) { alert('Please enter a hypothesis.'); return; }
 
-            try {
-                const response = await fetch(`/api/v1/search?q=${encodeURIComponent(hypothesis)}`);
-                const results = await response.json();
+                const originalContent = searchButton.innerHTML;
+                searchButton.disabled = true;
+                searchButton.innerHTML = '<div class="loading"></div>';
+                resultsContainer.style.display = 'none';
+                chartWrapper.style.display = 'none';
 
-                resultsContainer.style.display = 'block';
-                resultsCount.textContent = `${results.length} papers found`;
-                
-                if (results.length === 0) {
-                    resultsList.innerHTML = '<p style="color: #666; text-align: center;">No relevant papers found with sufficient similarity.</p>';
-                } else {
-                    // ⭐ 1. 차트 그리기 (검색 결과가 있을 때만)
-                    renderChart(results);
-                    chartWrapper.style.display = 'block';
+                try {
+                    // 백엔드 요청: 127.0.0.1 사용 (Mac 이슈 방지)
+                    const response = await fetch('http://127.0.0.1:8000/api/v1/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            query: hypothesis,
+                            top_k: 10
+                        })
+                    });
 
-                    // 2. 리스트 그리기
-                    resultsList.innerHTML = results.map(paper => `
-                        <div class="result-item" onclick="window.open('${paper.url}', '_blank')">
-                            <h3 class="result-title">${paper.title}</h3>
-                            <div class="result-meta">
-                                <span>📅 ${paper.year}</span>
-                                <span>👤 ${paper.authors}</span>
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const results = data.results;
+
+                    resultsContainer.style.display = 'block';
+                    resultsCount.textContent = `${results.length} papers found`;
+                    
+                    if (results.length === 0) {
+                        resultsList.innerHTML = '<p style="color: #666; text-align: center;">No relevant papers found.</p>';
+                    } else {
+                        renderChart(results);
+                        chartWrapper.style.display = 'block';
+
+                        // ⭐ 관련도 점수(paper.score) 표시 로직 추가
+                        resultsList.innerHTML = results.map(paper => `
+                            <div class="result-item" onclick="window.open('${paper.url}', '_blank')">
+                                <h3 class="result-title">${paper.title}</h3>
+                                <div class="result-meta">
+                                    <span>📅 ${paper.year || 'N/A'}</span>
+                                    <span>👤 ${paper.authors ? paper.authors.substring(0, 50) + '...' : 'Unknown'}</span>
+                                </div>
+                                <p class="result-abstract">${paper.abstract.substring(0, 200)}...</p>
+                                
+                                <div style="margin-top: 1rem;">
+                                    <span class="result-score" style="
+                                        background: ${paper.score > 70 ? 'rgba(139, 92, 246, 0.1)' : 'rgba(200, 200, 200, 0.1)'}; 
+                                        color: ${paper.score > 70 ? '#8b5cf6' : '#666'};
+                                        border: 1px solid ${paper.score > 70 ? 'rgba(139, 92, 246, 0.3)' : 'rgba(200, 200, 200, 0.3)'};
+                                        padding: 0.4rem 0.8rem;
+                                        border-radius: 12px;
+                                        font-size: 0.85rem;
+                                        font-weight: 700;
+                                    ">
+                                        ✨ Match: ${paper.score}%
+                                    </span>
+                                </div>
                             </div>
-                            <p class="result-abstract">${paper.abstract}</p>
-                            <span class="result-score">✨ Match: ${paper.similarity}%</span>
-                        </div>
-                    `).join('');
+                        `).join('');
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                    alert('서버 연결 실패! uvicorn이 8000번 포트에서 켜져 있는지 확인해주세요.');
+                } finally {
+                    searchButton.disabled = false;
+                    searchButton.innerHTML = originalContent; 
                 }
-            } catch (error) {
-                console.error('Search error:', error);
-                alert('Failed to connect to the server.');
-            } finally {
-                searchButton.disabled = false;
-                searchButton.innerHTML = originalContent; 
-            }
-        });
-
-        // ⭐ [추가됨] 차트 그리는 함수
-        function renderChart(papers) {
-            const yearCounts = {};
-            // 연도별 개수 세기
-            papers.forEach(paper => {
-                const year = paper.year;
-                yearCounts[year] = (yearCounts[year] || 0) + 1;
             });
 
-            // 정렬
-            const sortedYears = Object.keys(yearCounts).sort();
-            const counts = sortedYears.map(year => yearCounts[year]);
+            function renderChart(papers) {
+                const yearCounts = {};
+                papers.forEach(paper => {
+                    if(paper.year) {
+                        yearCounts[paper.year] = (yearCounts[paper.year] || 0) + 1;
+                    }
+                });
 
-            // 기존 차트 파괴 (중복 방지)
-            if (myChart) {
-                myChart.destroy();
-            }
+                const sortedYears = Object.keys(yearCounts).sort();
+                const counts = sortedYears.map(year => yearCounts[year]);
 
-            // 새 차트 생성
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sortedYears,
-                    datasets: [{
-                        label: 'Papers per Year',
-                        data: counts,
-                        backgroundColor: 'rgba(167, 139, 250, 0.7)',
-                        borderColor: 'rgba(139, 92, 246, 1)',
-                        borderWidth: 1,
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        title: {
-                            display: true,
-                            text: 'Publication Trend (Yearly)',
-                            color: '#2d3561',
-                            font: { size: 14, family: "'Plus Jakarta Sans', sans-serif" }
-                        }
+                if (myChart) {
+                    myChart.destroy();
+                }
+
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sortedYears,
+                        datasets: [{
+                            label: 'Papers per Year',
+                            data: counts,
+                            backgroundColor: 'rgba(167, 139, 250, 0.7)',
+                            borderColor: 'rgba(139, 92, 246, 1)',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1, precision: 0 },
-                            grid: { color: 'rgba(0,0,0,0.05)' }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: 'Publication Trend (Yearly)',
+                                color: '#2d3561',
+                                font: { size: 14, family: "'Plus Jakarta Sans', sans-serif" }
+                            }
                         },
-                        x: {
-                            grid: { display: false }
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1, precision: 0 },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
                         }
                     }
+                });
+            }
+
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    searchButton.click();
                 }
             });
-        }
-
-        searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                searchButton.click();
-            }
         });
     </script>
 </body>
