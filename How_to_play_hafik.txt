@@ -1,0 +1,9 @@
+psql17 "$(< ~/Desktop/hafikdb.txt)"
+
+source venv/bin/activate
+ㄴ 에러해결) Set-ExecutionPolicy RemoteSigned -Scope Process
+
+uvicorn app.main:app --reload
+
+python3 -m https.server 3000
+/Users/u4cn/Desktop/hafikdb.txt
